@@ -1,0 +1,23 @@
+
+Voici ma base
+docker run -it \
+  --name my-postgres \
+  -e POSTGRES_USER=root \
+  -e POSTGRES_PASSWORD=root \
+  -e POSTGRES_DB=ny_taxi \
+  -v $(pwd)/ny_taxi_postgres_data:/var/lib/postgresql/data \
+  -p 5432:5432 \
+  postgres:13 \
+
+  mes données sont dans  week_1/yellow_tripdata_2025-01.parquet
+
+  merci de me décrire les étapes à suivre dans un notebook pour uploader les donner du fichier parquet dans la base postgres
+
+
+docker run -it \
+  --name my-pgadmin \
+  -e PGADMIN_DEFAULT_EMAIL=admin@admin.com \
+  -e PGADMIN_DEFAULT_PASSWORD=admin \
+  -p 8080:80 \
+  --link my-postgres:postgres \
+  dpage/pgadmin4

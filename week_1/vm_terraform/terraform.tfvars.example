@@ -1,0 +1,34 @@
+# Copy this file to terraform.tfvars and customize the values
+# terraform.tfvars will be ignored by git for security
+
+# Project Configuration
+project_id = "learn-de-zoomcamp-2025"
+region     = "europe-west6"
+zone       = "europe-west6-a"
+
+# Credentials
+credentials_file = "../../keys/gcp_de_camp_2025_cred.json"
+
+# Network Configuration
+network_name = "de-zoomcamp-network"
+subnet_name  = "de-zoomcamp-subnet"
+subnet_cidr  = "10.0.1.0/24"
+
+# VM Configuration
+vm_name         = "mohamed-de-zoomcamp-vm"
+vm_machine_type = "e2-standard-4"  # 4 vCPUs, 16 GB RAM - good for data engineering
+vm_image        = "ubuntu-os-cloud/ubuntu-2204-lts"
+vm_disk_size    = 100  # GB - increased for data storage
+vm_disk_type    = "pd-standard"
+
+# SSH Configuration - IMPORTANT: You need to create SSH keys first!
+ssh_user         = "de-user"
+ssh_pub_key_file = "~/.ssh/id_rsa.pub"  # Make sure this file exists
+
+# Service Account
+vm_service_account_id           = "de-vm-service-account"
+vm_service_account_display_name = "DE VM Service Account"
+
+# Labels
+environment   = "dev"
+project_label = "de-zoomcamp"

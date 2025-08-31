@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:13
+    container_name: my-postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+    volumes:
+      - ./ny_taxi_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ny_taxi_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d ny_taxi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PgAdmin (optional)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: my-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - ny_taxi_network
+
+  # Data Import Script
+  import-script:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ny-taxi-importer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    networks:
+      - ny_taxi_network
+    # Uncomment the line below to run import automatically
+    # command: ["python", "ny_taxi_pg_import.py", "--verbose"]
+
+networks:
+  ny_taxi_network:
+    driver: bridge

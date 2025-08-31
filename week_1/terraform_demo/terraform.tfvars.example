@@ -1,0 +1,29 @@
+# Copy this file to terraform.tfvars and customize the values as needed
+# terraform.tfvars will be ignored by git for security
+
+# GCP Project Configuration
+project_id = "your-project-id-here"
+region     = "us-central1"
+zone       = "us-central1-c"
+location   = "EUROPE-WEST6"  # Use "US" or "EU" for multi-region, or specific region like "europe-west6"
+
+# Credentials
+credentials_file = "../../keys/gcp_de_camp_2025_cred.json"
+
+# Storage Configuration
+bucket_name           = "your-unique-bucket-name"
+bucket_lifecycle_age  = 30
+
+# BigQuery Configuration
+dataset_id           = "your_dataset_name"
+dataset_friendly_name = "Your Dataset Display Name"
+dataset_description  = "Description of your dataset"
+table_expiration_ms  = 3600000  # 1 hour in milliseconds (3600000), set to null for no expiration
+
+# Service Account
+service_account_id           = "your-service-account-id"
+service_account_display_name = "Your Service Account Display Name"
+
+# Labels and Environment
+environment    = "dev"  # dev, staging, prod
+project_label  = "your-project-name"

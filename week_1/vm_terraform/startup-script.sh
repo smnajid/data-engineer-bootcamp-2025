@@ -31,6 +31,12 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docke
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+# Install standalone Docker Compose for compatibility
+DOCKER_COMPOSE_VERSION="v2.24.1"
+curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+
 # Add docker group
 groupadd -f docker
 
@@ -211,6 +217,129 @@ if ! id "de-user" &>/dev/null; then
 fi
 
 # Set ownership for user directories
+chown -R de-user:de-user /home/de-user/
+
+# Configure git branch in prompt for all users
+# Add to system-wide bashrc
+cat >> /etc/bash.bashrc << 'EOF'
+
+# Git branch in prompt
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+# Set PS1 with git branch for all users
+export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;31m\]$(parse_git_branch)\[\033[00m\]\$ '
+EOF
+
+# Configure for zsh users (if zsh is installed)
+if command -v zsh &> /dev/null; then
+    cat >> /etc/zsh/zshrc << 'EOF'
+
+# Git branch in prompt for zsh
+autoload -Uz vcs_info
+precmd() { vcs_info }
+zstyle ':vcs_info:git:*' formats ' (%b)'
+setopt PROMPT_SUBST
+PROMPT='%F{green}%n@%m%f:%F{blue}%~%f%F{red}${vcs_info_msg_0_}%f %% '
+EOF
+fi
+
+# Add git branch prompt to de-user's bashrc specifically
+cat >> /home/de-user/.bashrc << 'EOF'
+
+# Git branch in prompt
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+# Custom prompt with git branch
+export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;31m\]$(parse_git_branch)\[\033[00m\]\$ '
+EOF
+
+# Add git branch prompt to de-user's zshrc if they use zsh
+if command -v zsh &> /dev/null; then
+    cat >> /home/de-user/.zshrc << 'EOF'
+
+# Git branch in prompt for zsh
+autoload -Uz vcs_info
+precmd() { vcs_info }
+zstyle ':vcs_info:git:*' formats ' (%b)'
+setopt PROMPT_SUBST
+PROMPT='%F{green}%n@%m%f:%F{blue}%~%f%F{red}${vcs_info_msg_0_}%f %% '
+EOF
+fi
+
+# Configure Git for the user
+sudo -u de-user bash << 'EOF'
+cd /home/de-user
+
+# Set up Git configuration
+git config --global user.name "Mohamed NAJID"
+git config --global user.email "smnajid@gmail.com"
+git config --global init.defaultBranch main
+git config --global pull.rebase false
+
+# Generate SSH key for GitHub authentication
+if [ ! -f /home/de-user/.ssh/id_ed25519 ]; then
+    ssh-keygen -t ed25519 -C "smnajid@gmail.com" -f /home/de-user/.ssh/id_ed25519 -N ""
+    
+    # Set proper permissions
+    chmod 700 /home/de-user/.ssh
+    chmod 600 /home/de-user/.ssh/id_ed25519
+    chmod 644 /home/de-user/.ssh/id_ed25519.pub
+    
+    # Add GitHub to known hosts
+    ssh-keyscan -H github.com >> /home/de-user/.ssh/known_hosts
+    
+    # Create SSH config for GitHub
+    cat > /home/de-user/.ssh/config << 'SSH_EOF'
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+SSH_EOF
+    chmod 600 /home/de-user/.ssh/config
+fi
+
+# Clone the data engineering repository
+if [ ! -d /home/de-user/data-engineer-bootcamp-2025 ]; then
+    # Try SSH first, fallback to HTTPS if SSH key not configured on GitHub yet
+    git clone git@github.com:smnajid/data-engineer-bootcamp-2025.git /home/de-user/data-engineer-bootcamp-2025 2>/dev/null || \
+    git clone https://github.com/smnajid/data-engineer-bootcamp-2025.git /home/de-user/data-engineer-bootcamp-2025
+    
+    # If cloned via HTTPS, set remote to SSH for future pushes
+    if [ -d /home/de-user/data-engineer-bootcamp-2025 ]; then
+        cd /home/de-user/data-engineer-bootcamp-2025
+        git remote set-url origin git@github.com:smnajid/data-engineer-bootcamp-2025.git
+    fi
+fi
+
+# Create a projects directory for additional repositories
+mkdir -p /home/de-user/projects
+
+# Create a helpful script to display SSH public key
+cat > /home/de-user/show-ssh-key.sh << 'SCRIPT_EOF'
+#!/bin/bash
+echo "🔑 Your SSH Public Key for GitHub:"
+echo "======================================"
+cat ~/.ssh/id_ed25519.pub
+echo ""
+echo "📋 To add this key to GitHub:"
+echo "1. Copy the key above"
+echo "2. Go to https://github.com/settings/ssh/new"
+echo "3. Paste the key and give it a title (e.g., 'DE Zoomcamp VM')"
+echo "4. Click 'Add SSH key'"
+echo ""
+echo "✅ After adding the key, you can push to your repositories!"
+SCRIPT_EOF
+
+chmod +x /home/de-user/show-ssh-key.sh
+
+EOF
+
+# Ensure all files are owned by de-user
 chown -R de-user:de-user /home/de-user/
 
 # Clean up

@@ -21,3 +21,5 @@ docker run -it \
   -p 8080:80 \
   --link my-postgres:postgres \
   dpage/pgadmin4
+
+  https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-01.parquet

@@ -140,4 +140,7 @@ resource "google_compute_instance" "vm_instance" {
 
   # Allow stopping for updates
   allow_stopping_for_update = true
+  
+  # Control VM state
+  desired_status = var.vm_desired_status
 }

@@ -303,6 +303,7 @@ SSH_EOF
     chmod 600 /home/de-user/.ssh/config
 fi
 
+# comment
 # Clone the data engineering repository
 if [ ! -d /home/de-user/data-engineer-bootcamp-2025 ]; then
     # Try SSH first, fallback to HTTPS if SSH key not configured on GitHub yet

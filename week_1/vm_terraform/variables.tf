@@ -111,3 +111,14 @@ variable "project_label" {
   type        = string
   default     = "de-zoomcamp"
 }
+
+# VM State Control
+variable "vm_desired_status" {
+  description = "Desired status of the VM (RUNNING or TERMINATED)"
+  type        = string
+  default     = "RUNNING"
+  validation {
+    condition     = contains(["RUNNING", "TERMINATED"], var.vm_desired_status)
+    error_message = "VM desired status must be either RUNNING or TERMINATED."
+  }
+}

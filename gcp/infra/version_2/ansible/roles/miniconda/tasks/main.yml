@@ -1,0 +1,78 @@
+---
+- name: Download Miniconda installer
+  get_url:
+    url: "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    dest: /tmp/Miniconda3-latest-Linux-x86_64.sh
+    mode: '0755'
+
+- name: Install Miniconda
+  shell: |
+    bash /tmp/Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
+  args:
+    creates: /opt/miniconda3/bin/conda
+
+- name: Create conda symlinks
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  loop:
+    - { src: "/opt/miniconda3/bin/conda", dest: "/usr/local/bin/conda" }
+    - { src: "/opt/miniconda3/bin/python", dest: "/usr/local/bin/python3-conda" }
+
+- name: Set up conda PATH for all users
+  lineinfile:
+    path: /etc/profile.d/conda-path.sh
+    line: 'export PATH="/opt/miniconda3/bin:$PATH"'
+    create: yes
+    mode: '0755'
+
+- name: Configure conda for ansible user
+  shell: |
+    /opt/miniconda3/bin/conda config --system --set auto_activate_base false
+  args:
+    creates: /opt/miniconda3/.condarc
+
+- name: Accept conda Terms of Service
+  shell: |
+    /opt/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    /opt/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  ignore_errors: yes
+
+- name: Install Python and pip in conda
+  shell: |
+    /opt/miniconda3/bin/conda install -y python pip -c conda-forge
+  args:
+    creates: /opt/miniconda3/bin/pip
+
+- name: Install virtualenv
+  pip:
+    name: virtualenv
+    executable: /opt/miniconda3/bin/pip
+
+- name: Set up conda environment for ansible user
+  shell: |
+    /opt/miniconda3/bin/conda init bash
+  environment:
+    HOME: /home/ansible
+  become_user: ansible
+
+- name: Create conda environment for data engineering
+  shell: |
+    /opt/miniconda3/bin/conda create -n de-zoomcamp python=3.11 -c conda-forge -y
+  args:
+    creates: /opt/miniconda3/envs/de-zoomcamp
+
+- name: Clean up Miniconda installer
+  file:
+    path: /tmp/Miniconda3-latest-Linux-x86_64.sh
+    state: absent
+
+- name: Verify Miniconda installation
+  command: /opt/miniconda3/bin/conda --version
+  register: conda_version
+  changed_when: false
+
+- name: Display Miniconda version
+  debug:
+    msg: "Miniconda installed: {{ conda_version.stdout }}"

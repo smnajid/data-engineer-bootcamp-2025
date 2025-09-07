@@ -1,0 +1,60 @@
+---
+- name: Install common development tools
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - tree
+      - unzip
+      - jq
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - apt-transport-https
+      - build-essential
+      - software-properties-common
+      - tmux
+      - make
+      - python3
+      - python3-pip
+      - python3-venv
+    state: present
+    update_cache: yes
+
+- name: Create development directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/development
+    - /home/ansible/workspace
+    - /home/ansible/.ssh
+
+- name: Set up SSH directory permissions
+  file:
+    path: /home/ansible/.ssh
+    state: directory
+    mode: '0700'
+    owner: ansible
+    group: ansible
+
+- name: Create useful aliases for ansible user
+  lineinfile:
+    path: /home/ansible/.bashrc
+    line: "{{ item }}"
+    create: yes
+    owner: ansible
+    group: ansible
+  loop:
+    - "alias ll='ls -la'"
+    - "alias la='ls -A'"
+    - "alias l='ls -CF'"
+    - "alias ..='cd ..'"
+    - "alias ...='cd ../..'"
+    - "alias grep='grep --color=auto'"
+    - "alias fgrep='fgrep --color=auto'"
+    - "alias egrep='egrep --color=auto'"

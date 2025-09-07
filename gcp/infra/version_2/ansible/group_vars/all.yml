@@ -1,0 +1,26 @@
+---
+# Global variables for all hosts
+gcloud_project: "learn-de-zoomcamp-2025"
+gcloud_region: "europe-west6"
+gcloud_zone: "europe-west6-a"
+
+# Miniconda configuration
+miniconda_version: "latest"
+conda_env_name: "de-zoomcamp"
+conda_python_version: "3.11"
+
+# Docker configuration
+docker_compose_version: "2.24.1"
+
+# Development tools
+dev_tools:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - tree
+  - unzip
+  - jq
+  - tmux
+  - make

@@ -1,0 +1,133 @@
+org:
+  organization_id: "123456789012"                 # Your org ID
+  billing_account_id: "000000-AAAAAA-BBBBBB"      # Billing account
+  naming:
+    project_prefix: "de-camp"
+    resource_delimiter: "-"
+  labels:
+    env: "dev"
+    owner: "data-platform"
+
+project:
+  project_id: "de-camp-dev"
+  create_project: false
+  enable_apis:
+    - compute.googleapis.com
+    - storage-component.googleapis.com
+    - bigquery.googleapis.com
+    - pubsub.googleapis.com
+
+locations:
+  region: "us-central1"
+  zones:
+    - "us-central1-a"
+    - "us-central1-b"
+
+state_backend:
+  type: "gcs"
+  bucket: "tf-state-de-camp"               # Existing bucket for state; if not, bootstrap
+  prefix: "infra/dev"
+  project: "de-camp-platform"             # Project hosting the state bucket
+
+identity:
+  iam_bindings:
+    - role: "roles/viewer"
+      members:
+        - "group:platform-viewers@example.com"
+    - role: "roles/storage.objectAdmin"
+      members:
+        - "serviceAccount:sa-ci@de-camp-dev.iam.gserviceaccount.com"
+
+networking:
+  vpc:
+    name: "vpc-de-camp-dev"
+    routing_mode: "GLOBAL"                 # Or REGIONAL
+    subnets:
+      - name: "sn-apps"
+        ip_cidr_range: "10.10.0.0/20"
+        region: "us-central1"
+        secondary_ip_ranges: []
+  firewall_rules:
+    - name: "allow-icmp"
+      direction: "INGRESS"
+      ranges: ["0.0.0.0/0"]
+      allow:
+        - protocol: "icmp"
+
+data_platform:
+  gcs_buckets:
+    - name: "de-camp-dev-raw"
+      location: "us"
+      uniform_bucket_level_access: true
+      versioning: true
+      retention_policy_days: 7
+  bigquery:
+    datasets:
+      - dataset_id: "raw"
+        location: "US"
+        default_table_expiration_ms: null
+  pubsub:
+    topics:
+      - name: "events.raw"
+        message_retention_duration: "604800s"
+        kms_key_name: null
+
+runtime:
+  cloud_run_services: []
+  gce_instances:
+    - name: "example-vm"
+      machine_type: "e2-standard-2"
+      zone: "us-central1-a"
+      boot_disk:
+        size_gb: 30
+        type: "pd-balanced"
+        image_family: "debian-12"
+        image_project: "debian-cloud"
+      # Minimal startup script - just installs Ansible and creates ansible user
+      startup_script: |
+        #!/bin/bash
+        set -e
+        export DEBIAN_FRONTEND=noninteractive
+        
+        # Update system and install basic tools
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y curl wget git vim htop tree unzip jq ca-certificates gnupg lsb-release apt-transport-https build-essential software-properties-common tmux make python3 python3-pip
+        
+        # Install Ansible
+        pip3 install ansible
+        
+        # Create ansible user for configuration management
+        useradd -m -s /bin/bash ansible
+        usermod -aG sudo ansible
+        echo 'ansible ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+        
+        # Create directory for Ansible playbooks
+        mkdir -p /opt/ansible
+        chown ansible:ansible /opt/ansible
+        
+        echo "VM ready for Ansible configuration!"
+  gke_clusters: []
+
+configuration_management:
+  type: "ansible"
+  playbooks:
+    - name: "setup-dev-environment"
+      description: "Development environment setup"
+      roles:
+        - "common-tools"
+        - "docker"
+        - "miniconda"
+        - "gcloud-sdk"
+  inventory:
+    type: "dynamic"
+    source: "terraform_output"
+  ssh_key_management:
+    type: "gcp_metadata"
+    user: "ansible"
+
+policies:
+  prevent_destroy_critical: true
+  default_kms_key: null
+
+

@@ -1,0 +1,59 @@
+---
+- name: Add Google Cloud SDK GPG key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Add Google Cloud SDK repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main"
+    state: present
+    update_cache: yes
+
+- name: Install Google Cloud SDK
+  apt:
+    name: google-cloud-cli
+    state: present
+
+- name: Install additional gcloud components
+  shell: |
+    gcloud components install {{ item }} --quiet
+  loop:
+    - kubectl
+    - docker-credential-gcr
+    - gke-gcloud-auth-plugin
+  register: gcloud_components
+  failed_when: false
+
+- name: Set up gcloud configuration directory for ansible user
+  file:
+    path: /home/ansible/.config/gcloud
+    state: directory
+    owner: ansible
+    group: ansible
+    mode: '0755'
+
+- name: Create gcloud configuration template
+  template:
+    src: gcloud_config.j2
+    dest: /home/ansible/.config/gcloud/configurations/config_default
+    owner: ansible
+    group: ansible
+    mode: '0644'
+
+- name: Set up gcloud PATH for ansible user
+  lineinfile:
+    path: /home/ansible/.bashrc
+    line: 'export PATH="/usr/lib/google-cloud-sdk/bin:$PATH"'
+    create: yes
+    owner: ansible
+    group: ansible
+
+- name: Verify Google Cloud SDK installation
+  command: gcloud version
+  register: gcloud_version
+  changed_when: false
+
+- name: Display Google Cloud SDK version
+  debug:
+    msg: "Google Cloud SDK installed: {{ gcloud_version.stdout_lines[0] }}"

@@ -1,0 +1,18 @@
+[core]
+account = {{ gcloud_account | default('') }}
+project = {{ gcloud_project | default('learn-de-zoomcamp-2025') }}
+region = {{ gcloud_region | default('europe-west6') }}
+zone = {{ gcloud_zone | default('europe-west6-a') }}
+
+[compute]
+region = {{ gcloud_region | default('europe-west6') }}
+zone = {{ gcloud_zone | default('europe-west6-a') }}
+
+[container]
+cluster = {{ gcloud_cluster | default('') }}
+
+[dataproc]
+region = {{ gcloud_region | default('europe-west6') }}
+
+[dataflow]
+region = {{ gcloud_region | default('europe-west6') }}

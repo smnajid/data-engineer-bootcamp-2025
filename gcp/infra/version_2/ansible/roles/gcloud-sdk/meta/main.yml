@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: DE Zoomcamp Team
+  description: Google Cloud SDK installation and configuration
+  company: Data Engineering Zoomcamp
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - 12
+  galaxy_tags:
+    - gcp
+    - gcloud
+    - cloud
+    - development
+
+dependencies: []

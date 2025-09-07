@@ -1,0 +1,84 @@
+org:
+  organization_id: "123456789012"                 # Your org ID
+  billing_account_id: "000000-AAAAAA-BBBBBB"      # Billing account
+  naming:
+    project_prefix: "de-camp"
+    resource_delimiter: "-"
+  labels:
+    env: "dev"
+    owner: "data-platform"
+
+project:
+  project_id: "de-camp-dev"
+  create_project: false
+  enable_apis:
+    - compute.googleapis.com
+    - storage-component.googleapis.com
+    - bigquery.googleapis.com
+    - pubsub.googleapis.com
+
+locations:
+  region: "us-central1"
+  zones:
+    - "us-central1-a"
+    - "us-central1-b"
+
+state_backend:
+  type: "gcs"
+  bucket: "tf-state-de-camp"               # Existing bucket for state; if not, bootstrap
+  prefix: "infra/dev"
+  project: "de-camp-platform"             # Project hosting the state bucket
+
+identity:
+  iam_bindings:
+    - role: "roles/viewer"
+      members:
+        - "group:platform-viewers@example.com"
+    - role: "roles/storage.objectAdmin"
+      members:
+        - "serviceAccount:sa-ci@de-camp-dev.iam.gserviceaccount.com"
+
+networking:
+  vpc:
+    name: "vpc-de-camp-dev"
+    routing_mode: "GLOBAL"                 # Or REGIONAL
+    subnets:
+      - name: "sn-apps"
+        ip_cidr_range: "10.10.0.0/20"
+        region: "us-central1"
+        secondary_ip_ranges: []
+  firewall_rules:
+    - name: "allow-icmp"
+      direction: "INGRESS"
+      ranges: ["0.0.0.0/0"]
+      allow:
+        - protocol: "icmp"
+
+data_platform:
+  gcs_buckets:
+    - name: "de-camp-dev-raw"
+      location: "us"
+      uniform_bucket_level_access: true
+      versioning: true
+      retention_policy_days: 7
+  bigquery:
+    datasets:
+      - dataset_id: "raw"
+        location: "US"
+        default_table_expiration_ms: null
+  pubsub:
+    topics:
+      - name: "events.raw"
+        message_retention_duration: "604800s"
+        kms_key_name: null
+
+runtime:
+  cloud_run_services: []
+  gce_instances: []
+  gke_clusters: []
+
+policies:
+  prevent_destroy_critical: true
+  default_kms_key: null
+
+

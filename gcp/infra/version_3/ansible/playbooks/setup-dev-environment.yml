@@ -1,0 +1,52 @@
+---
+- name: Setup development environment for DE Zoomcamp
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Kill any stuck apt processes
+      shell: |
+        pkill -f apt-get || true
+        pkill -f dpkg || true
+        rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock
+      ignore_errors: yes
+
+    - name: Wait for any running apt operations to complete
+      shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          echo "Waiting for apt to finish..."
+          sleep 5
+        done
+      register: apt_wait
+      until: apt_wait.rc == 0
+      retries: 12
+      delay: 5
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+  roles:
+    - role: common-tools
+      tags: [common, tools]
+    
+    - role: docker
+      tags: [docker, containers]
+    
+    - role: miniconda
+      tags: [python, conda, data-science]
+    
+    - role: gcloud-sdk
+      tags: [gcp, gcloud, cloud]
+
+  post_tasks:
+    - name: Clean up apt cache
+      apt:
+        autoremove: yes
+        autoclean: yes
+    
+    - name: Display completion message
+      debug:
+        msg: "Development environment setup completed successfully!"

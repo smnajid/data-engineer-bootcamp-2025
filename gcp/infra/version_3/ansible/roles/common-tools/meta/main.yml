@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: DE Zoomcamp Team
+  description: Common development tools and utilities
+  company: Data Engineering Zoomcamp
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - 12
+  galaxy_tags:
+    - development
+    - tools
+    - common
+
+dependencies: []
